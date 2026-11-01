@@ -317,10 +317,11 @@ function show(id,btn){
 
 async function loadData(){
 
-  const [pr,st,mv]=await Promise.all([
+  const [pr,st,mv,bc]=await Promise.all([
     db.from('parts').select('*').order('created_at',{ascending:false}),
     db.from('stock').select('*'),
-    db.from('stock_movements').select('*').order('created_at',{ascending:false}).limit(200)
+    db.from('stock_movements').select('*').order('created_at',{ascending:false}).limit(200),
+    db.from('part_barcodes').select('part_id,barcode')
   ]);
 
   if(pr.error) throw pr.error;
