@@ -613,6 +613,60 @@ async function logout(){
   location.reload();
 }
 
+
+function renderAdjust() {
+  const select = document.getElementById('adjustPart');
+  if (!select) return;
+
+  const previous = select.value;
+
+  select.innerHTML = parts.map(p =>
+    `<option value="${esc(p.id)}">
+      ${esc(p.code)} — ${esc(p.name)}
+    </option>`
+  ).join('');
+
+  if (parts.some(p => p.id === previous)) {
+    select.value = previous;
+  }
+}
+
+async function adjustStock() {
+  if (!currentUser ||
+      !['admin', 'gestionar'].includes(currentRole)) {
+    alert('Nu ai permisiunea necesară.');
+    return;
+  }
+
+  const partId = document.getElementById('adjustPart').value;
+  const location = document.getElementById('adjustLoc').value;
+  const operation = document.getElementById('adjustOperation').value;
+  const quantity = Number(document.getElementById('adjustQty').value);
+  const note = document.getElementById('adjustNote').value.trim();
+  const output = document.getElementById('adjustMsg');
+
+  if (!partId || !Number.isSafeInteger(quantity) || quantity <= 0) {
+    output.textContent = 'Introdu o cantitate întreagă pozitivă.';
+    return;
+  }
+
+  try {
+    const { error } = await db.rpc('adjust_stock', {
+      p_part_id: partId,
+      p_location: location,
+      p_operation: operation,
+      p_quantity: quantity,
+      p_note: note || null
+    });
+
+    if (error) throw error;
+
+    await loadData();
+    output.textContent = 'Mișcarea a fost salvată cu succes.';
+  } catch (error) {
+    output.textContent = 'Eroare: ' + error.message;
+  }
+}
 initAuth().catch(error=>{
 
   console.error(error);
