@@ -1164,7 +1164,8 @@ if (!part || !['admin', 'gestionar'].includes(currentRole)) return;
 if (mode && mode.startsWith('barcode:')) {
   const partId = mode.slice(8);
   const part = activeParts().find(p => p.id === partId);
-  if (!part || currentRole !== 'admin') return;
+  
+if (!part || !['admin', 'gestionar'].includes(currentRole)) return;
 
   const barcode = code.trim();
 
