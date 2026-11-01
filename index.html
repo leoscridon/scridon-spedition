@@ -1037,10 +1037,11 @@ async function closeBarcodeScanner() {
 }
 
 async function addPartFromBarcode(barcode) {
-  if (currentRole !== 'admin') {
-    alert('Doar ADMIN poate adăuga piese.');
-    return;
-  }
+  
+if (!['admin', 'gestionar'].includes(currentRole)) {
+  alert('Nu ai permisiunea de a adăuga piese.');
+  return;
+}
 
   const name = prompt('Denumire piesă:');
   if (!name || !name.trim()) return;
