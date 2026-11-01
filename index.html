@@ -382,11 +382,39 @@ function renderDash(){
 }
 
 
+
 async function deletePart(id) {
   if (currentRole !== 'admin') {
-    alert('Doar ADMIN poate șterge produse.');
+    alert('Doar ADMIN poate arhiva produse.');
     return;
   }
+
+  const part = parts.find(p => p.id === id);
+  if (!part) return;
+
+  if (qty(id, 'DEPOZIT') !== 0 || qty(id, 'MAGAZIN') !== 0) {
+    alert('Produsul trebuie să aibă stoc ZERO în ambele locații.');
+    return;
+  }
+
+  if (!confirm('Arhivezi produsul ' + part.name + '? Istoricul se păstrează.')) {
+    return;
+  }
+
+  const { error } = await db.rpc('set_part_active', {
+    p_part_id: id,
+    p_active: false
+  });
+
+  if (error) {
+    alert('Nu s-a putut arhiva: ' + error.message);
+    return;
+  }
+
+  alert('Produs arhivat.');
+  await loadData();
+}
+
 
   const part = parts.find(p => p.id === id);
   if (!part) return;
