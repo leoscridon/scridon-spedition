@@ -1102,6 +1102,16 @@ if (mode === 'adjust') {
     '\nMAGAZIN: ' + qty(part.id, 'MAGAZIN') + ' buc.' +
     '\nAlege locația, Ieșire stoc și cantitatea.'
   );
+
+} else if (mode === 'transfer') {
+  document.getElementById('transferPart').value = part.id;
+
+  alert(
+    'Piesă: ' + part.name +
+    '\nDEPOZIT: ' + qty(part.id, 'DEPOZIT') + ' buc.' +
+    '\nMAGAZIN: ' + qty(part.id, 'MAGAZIN') + ' buc.' +
+    '\nAlege de unde, unde și cantitatea de transferat.'
+  );
 } else {
   document.getElementById('search').value = part.code;
   renderParts();
