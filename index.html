@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SCRIDON SPEDITION — Gestiune stocuri</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f5f7fb;color:#172033}
+header{height:64px;background:#fff;border-bottom:1px solid #e5e9f0;display:flex;align-items:center;padding:0 24px;justify-content:space-between}
+.brand{font-weight:800;letter-spacing:.5px}.brand span{display:block;font-size:12px;color:#718096;font-weight:500;margin-top:2px}
+.layout{display:flex;min-height:calc(100vh - 64px)}aside{width:230px;background:#111827;color:#dbe4f0;padding:18px 12px}
+nav button{width:100%;text-align:left;background:none;border:0;color:inherit;padding:12px 14px;border-radius:8px;margin:2px 0;cursor:pointer;font-size:14px}
+nav button.active,nav button:hover{background:#263247;color:#fff}
+main{flex:1;padding:26px;max-width:1400px;margin:auto;width:100%}
+h1{margin:0 0 6px;font-size:25px}.sub{color:#718096;margin-bottom:22px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}.card{background:#fff;border:1px solid #e6eaf0;border-radius:12px;padding:18px}.label{font-size:13px;color:#718096}.value{font-size:28px;font-weight:800;margin-top:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel{background:#fff;border:1px solid #e6eaf0;border-radius:12px;padding:18px;margin-bottom:18px}
+.panel h2{font-size:17px;margin:0 0 14px}.toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+input,select{padding:10px 11px;border:1px solid #d8dee8;border-radius:8px;background:#fff;min-width:180px}
+button.primary{background:#2563eb;color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
+button.secondary{background:#eef2f7;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:11px 9px;border-bottom:1px solid #edf0f4;text-align:left}th{color:#718096;font-weight:600;background:#fafbfc}
+.badge{padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.low{background:#fef3c7;color:#92400e}
+.hidden{display:none}.location{font-weight:700}
+@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}aside{width:190px}}
+@media(max-width:650px){aside{display:none}.cards{grid-template-columns:1fr 1fr}main{padding:16px}.value{font-size:22px}}
+</style>
+</head>
+<body>
+<header><div class="brand">SCRIDON SPEDITION<span>Gestiune stocuri — DEPOZIT & MAGAZIN</span></div><div>Administrator</div></header>
+<div class="layout">
+<aside><nav>
+<button class="active" onclick="show('dashboard',this)">📊 Dashboard</button>
+<button onclick="show('piese',this)">🔧 Piese auto</button>
+<button onclick="show('stoc',this)">📦 Stoc</button>
+<button onclick="show('transfer',this)">⇄ Transfer între locații</button>
+<button onclick="show('miscari',this)">↕ Mișcări stoc</button>
+<button onclick="show('inventar',this)">✓ Inventar</button>
+</nav></aside>
+<main>
+<section id="dashboard">
+<h1>Dashboard</h1><div class="sub">Situația stocurilor în timp real</div>
+<div class="cards">
+<div class="card"><div class="label">Total articole</div><div class="value" id="total">0</div></div>
+<div class="card"><div class="label">Stoc DEPOZIT</div><div class="value" id="dep">0</div></div>
+<div class="card"><div class="label">Stoc MAGAZIN</div><div class="value" id="mag">0</div></div>
+<div class="card"><div class="label">Alerte stoc minim</div><div class="value" id="alerts">0</div></div>
+</div>
+<div class="grid">
+<div class="panel"><h2>Stoc pe locații</h2><table><thead><tr><th>Locație</th><th>Cantitate</th></tr></thead><tbody><tr><td class="location">DEPOZIT</td><td id="dep2"></td></tr><tr><td class="location">MAGAZIN</td><td id="mag2"></td></tr></tbody></table></div>
+<div class="panel"><h2>Alerte</h2><table><thead><tr><th>Piesă</th><th>Locație</th><th>Stoc</th></tr></thead><tbody id="alertTable"></tbody></table></div>
+</div>
+</section>
+
+<section id="piese" class="hidden">
+<h1>Piese auto</h1><div class="sub">Catalogul articolelor gestionate</div>
+<div class="panel"><div class="toolbar"><input id="search" placeholder="Caută cod, OEM sau denumire" oninput="renderParts()"><button class="primary" onclick="addPart()">+ Adaugă piesă</button></div>
+<table><thead><tr><th>Cod</th><th>OEM</th><th>Denumire</th><th>Producător</th><th>Min.</th><th>DEPOZIT</th><th>MAGAZIN</th></tr></thead><tbody id="partsTable"></tbody></table></div>
+</section>
+
+<section id="stoc" class="hidden">
+<h1>Stoc</h1><div class="sub">Vizualizare stoc separat pe fiecare locație</div>
+<div class="panel"><div class="toolbar"><select id="stockLoc" onchange="renderStock()"><option>TOATE</option><option>DEPOZIT</option><option>MAGAZIN</option></select><input id="stockSearch" placeholder="Caută piesă" oninput="renderStock()"></div>
+<table><thead><tr><th>Cod</th><th>Denumire</th><th>Locație</th><th>Cantitate</th><th>Status</th></tr></thead><tbody id="stockTable"></tbody></table></div>
+</section>
+
+<section id="transfer" class="hidden">
+<h1>Transfer între locații</h1><div class="sub">Mută rapid piese între DEPOZIT și MAGAZIN</div>
+<div class="panel"><div class="toolbar"><select id="transferPart"></select><select id="from"><option>DEPOZIT</option><option>MAGAZIN</option></select><select id="to"><option>MAGAZIN</option><option>DEPOZIT</option></select><input id="qty" type="number" min="1" value="1"><button class="primary" onclick="transfer()">Efectuează transferul</button></div><div id="transferMsg"></div></div>
+</section>
+
+<section id="miscari" class="hidden"><h1>Mișcări stoc</h1><div class="sub">Istoricul intrărilor, ieșirilor și transferurilor</div><div class="panel"><table><thead><tr><th>Data</th><th>Operațiune</th><th>Piesă</th><th>Locație</th><th>Cantitate</th></tr></thead><tbody id="movesTable"></tbody></table></div></section>
+
+<section id="inventar" class="hidden"><h1>Inventar</h1><div class="sub">Pregătit pentru inventariere pe locație</div><div class="panel"><p>Aici vom adăuga în versiunea următoare inventarul cu cantitate scriptică, cantitate fizică și diferențe.</p><button class="primary" onclick="alert('Modulul de inventar este pregătit pentru extindere.')">Începe inventar</button></div></section>
+</main></div>
+
+<script>
+let parts=[
+{code:"FIL-001",oem:"HU719/7X",name:"Filtru ulei",maker:"MANN",min:5,dep:18,mag:7},
+{code:"PLA-002",oem:"1K0129620D",name:"Filtru aer",maker:"MAHLE",min:4,dep:9,mag:3},
+{code:"FRN-003",oem:"8V0698151",name:"Plăcuțe frână față",maker:"ATE",min:3,dep:12,mag:5},
+{code:"DIS-004",oem:"5Q0615301",name:"Disc frână",maker:"TRW",min:2,dep:4,mag:1},
+{code:"BAT-005",oem:"000915105",name:"Baterie 74Ah",maker:"VARTA",min:2,dep:6,mag:2}
+];
+let moves=[];
+function show(id,btn){document.querySelectorAll('main section').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(id==='dashboard')renderDash();if(id==='piese')renderParts();if(id==='stoc')renderStock();if(id==='transfer')renderTransfer();if(id==='miscari')renderMoves();}
+function renderDash(){let total=parts.length,dep=parts.reduce((a,p)=>a+p.dep,0),mag=parts.reduce((a,p)=>a+p.mag,0),alerts=parts.reduce((a,p)=>a+(p.dep<=p.min?1:0)+(p.mag<=p.min?1:0),0);document.getElementById('total').textContent=total;document.getElementById('dep').textContent=dep;document.getElementById('mag').textContent=mag;document.getElementById('alerts').textContent=alerts;document.getElementById('dep2').textContent=dep;document.getElementById('mag2').textContent=mag;document.getElementById('alerts').textContent=alerts;document.getElementById('alertTable').innerHTML=parts.flatMap(p=>[['DEPOZIT',p.dep],['MAGAZIN',p.mag]].filter(x=>x[1]<=p.min).map(x=>`<tr><td>${p.name}</td><td>${x[0]}</td><td><span class="badge low">${x[1]}</span></td></tr>`)).join('')||'<tr><td colspan=3>Nu există alerte.</td></tr>'}
+function renderParts(){let q=(document.getElementById('search')?.value||'').toLowerCase();document.getElementById('partsTable').innerHTML=parts.filter(p=>(p.code+p.oem+p.name+p.maker).toLowerCase().includes(q)).map(p=>`<tr><td>${p.code}</td><td>${p.oem}</td><td>${p.name}</td><td>${p.maker}</td><td>${p.min}</td><td>${p.dep}</td><td>${p.mag}</td></tr>`).join('')}
+function renderStock(){let loc=document.getElementById('stockLoc').value,q=(document.getElementById('stockSearch').value||'').toLowerCase(),rows=[];parts.forEach(p=>{[['DEPOZIT',p.dep],['MAGAZIN',p.mag]].forEach(x=>{if((loc==='TOATE'||loc===x[0])&&p.name.toLowerCase().includes(q))rows.push(`<tr><td>${p.code}</td><td>${p.name}</td><td>${x[0]}</td><td>${x[1]}</td><td><span class="badge ${x[1]<=p.min?'low':'ok'}">${x[1]<=p.min?'STOC MINIM':'OK'}</span></td></tr>`)})});document.getElementById('stockTable').innerHTML=rows.join('')}
+function renderTransfer(){document.getElementById('transferPart').innerHTML=parts.map((p,i)=>`<option value="${i}">${p.code} — ${p.name}</option>`).join('')}
+function transfer(){let p=parts[+document.getElementById('transferPart').value],from=document.getElementById('from').value,to=document.getElementById('to').value,q=+document.getElementById('qty').value;if(from===to||q<1)return;if(p[from==='DEPOZIT'?'dep':'mag']<q){document.getElementById('transferMsg').innerHTML='<p style="color:#b91c1c">Stoc insuficient.</p>';return}p[from==='DEPOZIT'?'dep':'mag']-=q;p[to==='DEPOZIT'?'dep':'mag']+=q;moves.unshift({date:new Date().toLocaleString('ro-RO'),op:'Transfer',name:p.name,loc:from+' → '+to,q});document.getElementById('transferMsg').innerHTML='<p style="color:#166534">Transfer efectuat.</p>';renderDash()}
+function renderMoves(){document.getElementById('movesTable').innerHTML=moves.map(m=>`<tr><td>${m.date}</td><td>${m.op}</td><td>${m.name}</td><td>${m.loc}</td><td>${m.q}</td></tr>`).join('')||'<tr><td colspan=5>Nu există mișcări în această sesiune.</td></tr>'}
+function addPart(){let name=prompt('Denumire piesă:');if(!name)return;let code=prompt('Cod intern:')||('ART-'+String(parts.length+1).padStart(3,'0'));parts.push({code,oem:prompt('Cod OEM:')||'',name,maker:prompt('Producător:')||'',min:+prompt('Stoc minim:',2)||2,dep:0,mag:0});renderParts();renderDash()}
+renderDash();
+</script>
+</body></html>
