@@ -1146,6 +1146,33 @@ async function openBarcodeScanner(mode) {
       { fps: 10, qrbox: { width: 250, height: 150 } },
       async function(code) {
         await closeBarcodeScanner();
+        
+if (mode && mode.startsWith('barcode:')) {
+  const partId = mode.slice(8);
+  const part = activeParts().find(p => p.id === partId);
+  if (!part || currentRole !== 'admin') return;
+
+  const barcode = code.trim();
+
+  if (!confirm(
+    'Asociezi codul ' + barcode +
+    '\ncu piesa ' + part.name + '?'
+  )) return;
+
+  const { error } = await db.rpc('admin_add_part_barcode', {
+    p_part_id: partId,
+    p_barcode: barcode
+  });
+
+  if (error) {
+    alert('Eroare: ' + error.message);
+  } else {
+    await loadData();
+    alert('Cod asociat piesei: ' + part.name);
+  }
+  return;
+}
+
 
         
 const scannedCode = code.trim();
