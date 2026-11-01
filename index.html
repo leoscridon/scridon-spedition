@@ -418,7 +418,6 @@ async function deletePart(id) {
 
   const part = parts.find(p => p.id === id);
   if (!part) return;
-
   const confirmed = confirm(
     'ȘTERGERE DEFINITIVĂ!\n\n' +
     'Produs: ' + part.name + '\n' +
