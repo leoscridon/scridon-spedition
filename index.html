@@ -989,10 +989,25 @@ async function openBarcodeScanner(mode) {
           p => p.barcode === code
         );
 
-        if (!part) {
-          alert('Cod necunoscut: ' + code);
-          return;
-        }
+        
+if (!part) {
+  if (currentRole !== 'admin') {
+    alert('Cod necunoscut: ' + code +
+          '. Doar ADMIN poate adăuga piese.');
+    return;
+  }
+
+  if (confirm(
+    'Cod de bare: ' + code +
+    '\nPiesa nu există în catalog.' +
+    '\nVrei să adaugi o piesă nouă?'
+  )) {
+    await addPartFromBarcode(code);
+  }
+
+  return;
+}
+
 
         document.getElementById('search').value = part.code;
         renderParts();
