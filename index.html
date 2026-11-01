@@ -27,9 +27,14 @@ const SUPABASE_KEY='sb_publishable_IHxjkA_4faoF_FUo2R1n8A_ITEXgK4e';
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let parts=[], stock=[], moves=[];
 function esc(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-async function addPart(){
-  const {data:{session}}=await db.auth.getSession();
+async function const {data:{session}}=await db.auth.getSession();
 
+if(!session){
+  alert('NU EXISTĂ SESIUNE');
+  return;
+}
+
+alert('SESIUNE OK - USER ID: '+session.user.id);
   if(!session){
     alert('NU EXISTĂ SESIUNE DE AUTENTIFICARE');
     return;
