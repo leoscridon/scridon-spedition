@@ -1072,9 +1072,16 @@ async function openBarcodeScanner(mode) {
       async function(code) {
         await closeBarcodeScanner();
 
-        const part = activeParts().find(
-          p => p.barcode === code
-        );
+        
+const scannedCode = code.trim();
+
+const part = activeParts().find(p =>
+  p.barcode === scannedCode ||
+  partBarcodes.some(b =>
+    b.part_id === p.id &&
+    b.barcode === scannedCode
+  )
+);
 
         
 if (!part) {
