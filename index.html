@@ -661,8 +661,9 @@ function renderMoves(){
 }
 
 async function addPart() {
-  if (currentRole !== 'admin') {
-  alert('Doar administratorul poate adăuga articole.');
+  
+if (!['admin', 'gestionar'].includes(currentRole)) {
+  alert('Nu ai permisiunea de a adăuga articole.');
   return;
 }
   const name = prompt('Denumire piesă:');
