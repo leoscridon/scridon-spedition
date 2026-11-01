@@ -72,7 +72,7 @@
   }
   }
 *{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f5f7fb;color:#172033}header{height:64px;background:#fff;border-bottom:1px solid #e5e9f0;display:flex;align-items:center;padding:0 24px;justify-content:space-between}.brand{font-weight:800;letter-spacing:.5px}.brand span{display:block;font-size:12px;color:#718096;font-weight:500;margin-top:2px}.status{font-size:12px;color:#166534;background:#dcfce7;padding:6px 9px;border-radius:999px}.layout{display:flex;min-height:calc(100vh - 64px)}aside{width:230px;background:#111827;color:#dbe4f0;padding:18px 12px}nav button{width:100%;text-align:left;background:none;border:0;color:inherit;padding:12px 14px;border-radius:8px;margin:2px 0;cursor:pointer;font-size:14px}nav button.active,nav button:hover{background:#263247;color:#fff}main{flex:1;padding:26px;max-width:1400px;margin:auto;width:100%}h1{margin:0 0 6px;font-size:25px}.sub{color:#718096;margin-bottom:22px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}.card{background:#fff;border:1px solid #e6eaf0;border-radius:12px;padding:18px}.label{font-size:13px;color:#718096}.value{font-size:28px;font-weight:800;margin-top:8px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel{background:#fff;border:1px solid #e6eaf0;border-radius:12px;padding:18px;margin-bottom:18px}.panel h2{font-size:17px;margin:0 0 14px}.toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}input,select{padding:10px 11px;border:1px solid #d8dee8;border-radius:8px;background:#fff;min-width:180px}button.primary{background:#2563eb;color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}button.secondary{background:#eef2f7;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:11px 9px;border-bottom:1px solid #edf0f4;text-align:left}th{color:#718096;font-weight:600;background:#fafbfc}.badge{padding:4px 8px;border-radius:999px;font-size:11px;font-weight:700}.ok{background:#dcfce7;color:#166534}.low{background:#fef3c7;color:#92400e}.hidden{display:none}.location{font-weight:700}.msg{margin-top:10px;font-size:14px}@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}aside{width:190px}}@media(max-width:650px){aside{display:block}.cards{grid-template-columns:1fr 1fr}main{padding:16px}.value{font-size:22px}}
- @media(max-width:650px){aside{display:block;width:100%;padding:8px;background:#111827;position:sticky;top:0;z-index:20}aside nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}nav button{width:auto;min-width:max-content;text-align:center;padding:10px 12px;margin:0;font-size:13px}.layout{display:block}.cards{grid-template-columns:1fr 1fr}main{padding:16px}.value{font-size:22px}.toolbar{flex-direction:column}.toolbar input,.toolbar select,.toolbar button{width:100%;min-width:0}table{display:block;overflow-x:auto;white-space:
+ @media(max-width:650px){aside{display:block;width:100%;padding:8px;background:#111827;position:sticky;top:0;z-index:20}aside nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}nav button{width:auto;min-width:max-content;text-align:center;padding:10px 12px;margin:0;font-size:13px}.layout{display:block}.cards{grid-template-columns:1fr 1fr}main{padding:16px}.value{font-size:22px}.toolbar{flex-direction:column}.toolbar input,.toolbar select,.toolbar button{width:100%;min-width:0}table{display:block;overflow-x:auto;white-space:nowrap}}
 @media (max-width: 650px) {
   header {
     height: auto;
@@ -330,6 +330,10 @@ async function loadData(){
 }
 
 
+function activeParts(){
+  return parts.filter(p => p.is_active !== false);
+}
+
 function renderDash(){
 
   const dep=stock
@@ -343,7 +347,7 @@ function renderDash(){
   let alerts=0;
   let rows=[];
 
-  parts.forEach(p=>{
+  activeParts().forEach(p=>{
 
     [
       ['DEPOZIT',qty(p.id,'DEPOZIT')],
@@ -368,7 +372,7 @@ function renderDash(){
 
   });
 
-  document.getElementById('total').textContent=parts.length;
+  document.getElementById('total').textContent=activeParts().length;
   document.getElementById('dep').textContent=dep;
   document.getElementById('mag').textContent=mag;
   document.getElementById('alerts').textContent=alerts;
@@ -415,39 +419,11 @@ async function deletePart(id) {
   await loadData();
 }
 
-
-  const part = parts.find(p => p.id === id);
-  if (!part) return;
-  const confirmed = confirm(
-    'ȘTERGERE DEFINITIVĂ!\n\n' +
-    'Produs: ' + part.name + '\n' +
-    'Cod: ' + part.code + '\n\n' +
-    'Produsul va fi șters definitiv doar dacă ' +
-    'are stoc zero și nu are istoric.\n\n' +
-    'Continui?'
-  );
-
-  if (!confirmed) return;
-
-  const { error } = await db.rpc(
-    'admin_delete_part',
-    { p_part_id: id }
-  );
-
-  if (error) {
-    alert('Produsul nu a fost șters:\n' + error.message);
-    return;
-  }
-
-  alert('Produs șters definitiv.');
-  await loadData();
-}
 function renderParts(){
 
   const q=(document.getElementById('search')?.value||'').toLowerCase();
 
-  const rows=parts
-  .filter(p => p.is_active !== false)
+  const rows=activeParts()
     .filter(p=>
       (p.code+' '+p.oem+' '+p.name+' '+p.manufacturer)
       .toLowerCase()
@@ -470,7 +446,7 @@ function renderParts(){
       style="background:#dc2626;color:white;
              border:0;border-radius:8px;
              padding:10px 12px;cursor:pointer">
-      Șterge
+      Arhivează
     </button>
   ` : ''}
 </td>
@@ -490,7 +466,7 @@ function renderStock(){
 
   const rows=[];
 
-  parts.forEach(p=>{
+  activeParts().forEach(p=>{
 
     [
       ['DEPOZIT',qty(p.id,'DEPOZIT')],
@@ -532,7 +508,7 @@ function renderStock(){
 function renderTransfer(){
 
   document.getElementById('transferPart').innerHTML=
-    parts.map(p=>`
+    activeParts().map(p=>`
       <option value="${p.id}">
         ${esc(p.code)} — ${esc(p.name)}
       </option>
@@ -547,6 +523,10 @@ async function transfer(){
   }
 
   const partId=document.getElementById('transferPart').value;
+  if (!activeParts().some(p => p.id === partId)) {
+    alert('Selectează un produs activ.');
+    return;
+  }
   const from=document.getElementById('from').value;
   const to=document.getElementById('to').value;
   const q=Number(document.getElementById('qty').value);
@@ -900,13 +880,13 @@ function renderAdjust() {
 
   const previous = select.value;
 
-  select.innerHTML = parts.map(p =>
+  select.innerHTML = activeParts().map(p =>
     `<option value="${esc(p.id)}">
       ${esc(p.code)} — ${esc(p.name)}
     </option>`
   ).join('');
 
-  if (parts.some(p => p.id === previous)) {
+  if (activeParts().some(p => p.id === previous)) {
     select.value = previous;
   }
 }
@@ -919,6 +899,10 @@ async function adjustStock() {
   }
 
   const partId = document.getElementById('adjustPart').value;
+  if (!activeParts().some(p => p.id === partId)) {
+    document.getElementById('adjustMsg').textContent = 'Selectează un produs activ.';
+    return;
+  }
   const location = document.getElementById('adjustLoc').value;
   const operation = document.getElementById('adjustOperation').value;
   const quantity = Number(document.getElementById('adjustQty').value);
