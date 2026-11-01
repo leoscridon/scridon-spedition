@@ -42,6 +42,138 @@ function renderStock(){const loc=document.getElementById('stockLoc').value,q=(do
 function renderTransfer(){document.getElementById('transferPart').innerHTML=parts.map(p=>`<option value="${p.id}">${esc(p.code)} — ${esc(p.name)}</option>`).join('')}
 async function transfer(){const partId=document.getElementById('transferPart').value,from=document.getElementById('from').value,to=document.getElementById('to').value,q=Number(document.getElementById('qty').value);if(from===to||q<1)return;const {error}=await db.rpc('transfer_stock',{p_part_id:partId,p_from:from,p_to:to,p_quantity:q,p_note:'Transfer între locații'});if(error){document.getElementById('transferMsg').innerHTML=`<span style="color:#b91c1c">Eroare: ${esc(error.message)}</span>`;return}document.getElementById('transferMsg').innerHTML='<span style="color:#166534">Transfer efectuat și salvat.</span>';await loadData()}
 function renderMoves(){const names=new Map(parts.map(p=>[p.id,p.name]));document.getElementById('movesTable').innerHTML=moves.map(m=>`<tr><td>${new Date(m.created_at).toLocaleString('ro-RO')}</td><td>${esc(m.movement_type)}</td><td>${esc(names.get(m.part_id)||m.part_id)}</td><td>${esc(m.location)}</td><td>${m.quantity}</td></tr>`).join('')||'<tr><td colspan="5">Nu există mișcări.</td></tr>'}
-async function addPart(){const name=prompt('Denumire piesă:');if(!name)return;const code=prompt('Cod intern:')||('ART-'+String(parts.length+1).padStart(3,'0'));const oem=prompt('Cod OEM:')||'';const manufacturer=prompt('Producător:')||'';const min_stock=Number(prompt('Stoc minim:','2'))||2;const {data,error}=await db.from('parts').insert({code,oem,name,manufacturer,min_stock}).select().single();if(error){alert('Eroare: '+error.message);return}await db.from('stock').insert([{part_id:data.id,location:'DEPOZIT',quantity:0},{part_id:data.id,location:'MAGAZIN',quantity:0}]);await loadData()}
-loadData().catch(e=>{document.getElementById('connection').textContent='Eroare conectare';document.getElementById('connection').style.background='#fee2e2';document.getElementById('connection').style.color='#991b1b';alert('Nu s-a putut încărca baza de date: '+e.message)})
-</script></body></html>
+async function addPart(){const name=prompt('Denumire piesă:');if(!name)return;const code=prompt('Cod intern:')||('ART-'+String(parts.length+1).padStart(3,'0'));const oem=prompt('Cod OEM:')||'';const manufacturer=prompt('Producător:')||'';const min_stock=Number(prompt('Stoc minim:','2'))||2;const {data,error}=await db.from('parts').insert({code,oem,name,manufacturer,min_stock}).select().single();if(error){alert('Eroare: '+error.message);return}await db.from('stock').insert([{part_id:data.id,location:'DEPOZIT',quantity:0},{part_id:data.id,location:'MAGAZIN',quantity:0}])
+initAuth().catch(e=>console.error(e));
+let currentUser=null;
+let currentRole=null;
+
+async function initAuth(){
+  const {data:{session}}=await db.auth.getSession();
+
+  if(session){
+    await setupUser(session.user);
+  }else{
+    showLogin();
+  }
+}
+
+function showLogin(){
+  if(document.getElementById('loginBox')) return;
+
+  const box=document.createElement('div');
+  box.id='loginBox';
+  box.style.cssText=
+    'position:fixed;inset:0;background:#f4f6f8;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  box.innerHTML=`
+    <div style="width:100%;max-width:380px;background:white;padding:28px;border-radius:18px;box-shadow:0 8px 30px #0002;">
+      <h1 style="margin:0 0 8px;text-align:center;">SCRIDON SPEDITION</h1>
+      <p style="text-align:center;color:#666;margin-bottom:25px;">Autentificare</p>
+
+      <input id="loginEmail" type="email" placeholder="Email"
+        style="width:100%;box-sizing:border-box;padding:14px;margin-bottom:12px;border:1px solid #ddd;border-radius:10px;font-size:16px;">
+
+      <input id="loginPassword" type="password" placeholder="Parola"
+        style="width:100%;box-sizing:border-box;padding:14px;margin-bottom:15px;border:1px solid #ddd;border-radius:10px;font-size:16px;">
+
+      <button onclick="doLogin()"
+        style="width:100%;padding:14px;background:#111;color:white;border:0;border-radius:10px;font-size:16px;font-weight:bold;">
+        Conectare
+      </button>
+
+      <div id="loginError" style="color:#c00;text-align:center;margin-top:15px;"></div>
+    </div>
+  `;
+
+  document.body.appendChild(box);
+}
+
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPassword').value;
+  const errorBox=document.getElementById('loginError');
+
+  errorBox.textContent='';
+
+  if(!email || !password){
+    errorBox.textContent='Completează emailul și parola.';
+    return;
+  }
+
+  const {data,error}=await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if(error){
+    errorBox.textContent='Email sau parolă incorectă.';
+    return;
+  }
+
+  await setupUser(data.user);
+}
+
+async function setupUser(user){
+  currentUser=user;
+
+  const {data,error}=await db
+    .from('user_roles')
+    .select('role')
+    .eq('user_id',user.id)
+    .single();
+
+  if(error || !data){
+    alert('Utilizatorul nu are un rol configurat.');
+    await db.auth.signOut();
+    showLogin();
+    return;
+  }
+
+  currentRole=data.role;
+
+  const loginBox=document.getElementById('loginBox');
+  if(loginBox) loginBox.remove();
+
+  addUserInfo();
+  applyRolePermissions();
+
+  await loadData();
+}
+
+function addUserInfo(){
+  if(document.getElementById('userInfo')) return;
+
+  const info=document.createElement('div');
+  info.id='userInfo';
+
+  info.style.cssText=
+    'position:fixed;right:10px;top:10px;z-index:9999;background:white;padding:8px 12px;border-radius:10px;box-shadow:0 2px 10px #0002;font-size:12px;';
+
+  info.innerHTML=`
+    <b>${currentRole==='admin'?'ADMIN':'GESTIONAR'}</b>
+    <button onclick="logout()" style="margin-left:8px;border:0;background:#eee;border-radius:6px;padding:5px 8px;">
+      Ieșire
+    </button>
+  `;
+
+  document.body.appendChild(info);
+}
+
+function applyRolePermissions(){
+  if(currentRole==='gestionar'){
+    const originalAddPart=window.addPart;
+
+    if(originalAddPart && !window._protectedAddPart){
+      window._protectedAddPart=true;
+
+      window.addPart=async function(){
+        alert('Doar administratorul poate adăuga/modifica articole.');
+      };
+    }
+  }
+}
+
+async function logout(){
+  await db.auth.signOut();
+  location.reload();
+}</script></body></html>
