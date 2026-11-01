@@ -402,6 +402,42 @@ function renderDash(){
 
 
 
+async function addBarcodeToPart(partId) {
+  if (currentRole !== 'admin') {
+    alert('Doar ADMIN poate adăuga coduri de bare.');
+    return;
+  }
+
+  const part = parts.find(p => p.id === partId);
+  if (!part) return;
+
+  const input = prompt(
+    'Cod de bare nou pentru: ' + part.name,
+    ''
+  );
+
+  if (input === null) return;
+
+  const barcode = input.trim();
+
+  if (!barcode) {
+    alert('Introdu un cod de bare.');
+    return;
+  }
+
+  const { error } = await db.rpc('admin_add_part_barcode', {
+    p_part_id: partId,
+    p_barcode: barcode
+  });
+
+  if (error) {
+    alert('Eroare: ' + error.message);
+    return;
+  }
+
+  await loadData();
+  alert('Codul de bare a fost asociat piesei: ' + part.name);
+}
 async function deletePart(id) {
   if (currentRole !== 'admin') {
     alert('Doar ADMIN poate arhiva produse.');
