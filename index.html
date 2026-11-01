@@ -951,6 +951,61 @@ initAuth().catch(function(error) {
     'Eroare conectare: ' + error.message;
 });
 
+let barcodeScanner = null;
+
+async function closeBarcodeScanner() {
+  if (barcodeScanner) {
+    try {
+      await barcodeScanner.stop();
+    } catch (e) {}
+    try {
+      barcodeScanner.clear();
+    } catch (e) {}
+    barcodeScanner = null;
+  }
+
+  document.getElementById('scannerBox')
+    .classList.add('hidden');
+}
+
+async function openBarcodeScanner(mode) {
+  const box = document.getElementById('scannerBox');
+  box.classList.remove('hidden');
+
+  try {
+    if (typeof Html5Qrcode === 'undefined') {
+      throw new Error('Biblioteca de scanare nu s-a încărcat.');
+    }
+
+    barcodeScanner = new Html5Qrcode('barcodeReader');
+
+    await barcodeScanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 150 } },
+      async function(code) {
+        await closeBarcodeScanner();
+
+        const part = activeParts().find(
+          p => p.barcode === code
+        );
+
+        if (!part) {
+          alert('Cod necunoscut: ' + code);
+          return;
+        }
+
+        document.getElementById('search').value = part.code;
+        renderParts();
+        alert('Piesă găsită: ' + part.name);
+      },
+      function() {}
+    );
+  } catch (error) {
+    await closeBarcodeScanner();
+    alert('Camera nu a pornit: ' + error.message);
+  }
+}
+
 </script>
 
 <div id="scannerBox" class="hidden"
