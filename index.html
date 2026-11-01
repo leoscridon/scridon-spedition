@@ -662,6 +662,10 @@ function renderMoves(){
 
 async function addPart() {
   if (currentRole !== 'admin') {
+  alert('Doar administratorul poate adăuga articole.');
+  return;
+}
+  if (currentRole !== 'admin') {
     alert('Doar administratorul poate adăuga articole.');
     return;
   }
