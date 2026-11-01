@@ -448,6 +448,7 @@ function renderParts(){
   const q=(document.getElementById('search')?.value||'').toLowerCase();
 
   const rows=parts
+  .filter(p => p.is_active !== false)
     .filter(p=>
       (p.code+' '+p.oem+' '+p.name+' '+p.manufacturer)
       .toLowerCase()
