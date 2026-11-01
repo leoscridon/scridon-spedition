@@ -669,11 +669,19 @@ async function adjustStock() {
     output.textContent = 'Eroare: ' + error.message;
   }
 }
-initAuth().catch(error=>{
 
-  console.error(error);
-
-  document.getElementById('connection').textContent=
-    'Eroare conectare: '+error.message;
+window.addEventListener('error', function(event) {
+  document.getElementById('connection').textContent =
+    'Eroare JavaScript: ' + event.message;
 });
-</script>
+
+window.addEventListener('unhandledrejection', function(event) {
+  document.getElementById('connection').textContent =
+    'Eroare: ' + (event.reason?.message || event.reason);
+});
+
+initAuth().catch(function(error) {
+  console.error(error);
+  document.getElementById('connection').textContent =
+    'Eroare conectare: ' + error.message;
+});
