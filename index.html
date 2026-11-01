@@ -403,6 +403,15 @@ function renderDash(){
 
 
 async function addBarcodeToPart(partId) {
+  
+  if (confirm(
+    'Vrei să scanezi codul de bare cu camera?\n' +
+    'OK = Camera\nAnulează = Introducere manuală'
+  )) {
+    await openBarcodeScanner('barcode:' + partId);
+    return;
+  }
+
   if (currentRole !== 'admin') {
     alert('Doar ADMIN poate adăuga coduri de bare.');
     return;
