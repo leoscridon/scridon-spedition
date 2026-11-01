@@ -203,7 +203,22 @@ if ('serviceWorker' in navigator) {
   📷 Scanează cod
 </button><button class="primary" onclick="addPart()">+ Adaugă piesă</button></div><table><thead><tr><th>Cod</th><th>OEM</th><th>Denumire</th><th>Producător</th><th>Min.</th><th>DEPOZIT</th><th>MAGAZIN</th><th>Acțiuni</th></tr></thead><tbody id="partsTable"></tbody></table></div></section>
 <section id="stoc" class="hidden"><h1>Stoc</h1><div class="sub">Vizualizare stoc separat pe fiecare locație</div><div class="panel"><div class="toolbar"><select id="stockLoc" onchange="renderStock()"><option>TOATE</option><option>DEPOZIT</option><option>MAGAZIN</option></select><input id="stockSearch" placeholder="Caută piesă" oninput="renderStock()"></div><table><thead><tr><th>Cod</th><th>Denumire</th><th>Locație</th><th>Cantitate</th><th>Status</th></tr></thead><tbody id="stockTable"></tbody></table></div></section>
-<section id="transfer" class="hidden"><h1>Transfer între locații</h1><div class="sub">Mută rapid piese între DEPOZIT și MAGAZIN</div><div class="panel"><div class="toolbar"><select id="transferPart"></select><select id="from"><option>DEPOZIT</option><option>MAGAZIN</option></select><select id="to"><option>MAGAZIN</option><option>DEPOZIT</option></select><input id="qty" type="number" min="1" value="1"><button class="primary" onclick="transfer()">Efectuează transferul</button></div><div id="transferMsg" class="msg"></div></div></section>
+<section id="transfer" class="hidden"><h1>Transfer între locații</h1><div class="sub">Mută rapid piese între DEPOZIT și MAGAZIN</div><div class="panel"><div class="toolbar"><select id="transferPart"></select>
+if (mode === 'adjust') {
+  document.getElementById('adjustPart').value = part.id;
+
+  alert(
+    'Piesă: ' + part.name +
+    '\nDEPOZIT: ' + qty(part.id, 'DEPOZIT') + ' buc.' +
+    '\nMAGAZIN: ' + qty(part.id, 'MAGAZIN') + ' buc.' +
+    '\nAlege locația, Ieșire stoc și cantitatea.'
+  );
+} else {
+  document.getElementById('search').value = part.code;
+  renderParts();
+  alert('Piesă găsită: ' + part.name);
+}
+<select id="from"><option>DEPOZIT</option><option>MAGAZIN</option></select><select id="to"><option>MAGAZIN</option><option>DEPOZIT</option></select><input id="qty" type="number" min="1" value="1"><button class="primary" onclick="transfer()">Efectuează transferul</button></div><div id="transferMsg" class="msg"></div></div></section>
 <section id="miscari" class="hidden"><h1>Mișcări stoc</h1><div class="sub">Istoricul intrărilor, ieșirilor și transferurilor</div><div class="panel"><table><thead><tr><th>Data</th><th>Operațiune</th><th>Piesă</th><th>Locație</th><th>Cantitate</th></tr></thead><tbody id="movesTable"></tbody></table></div></section>
 <section id="inventar" class="hidden"><h1>Inventar</h1><div class="sub">Pregătit pentru inventariere pe locație</div><div class="panel"><p>Inventarul detaliat îl adăugăm după ce terminăm conectarea bazei de date.</p></div></section>
 <section id="ajustare" class="hidden">
