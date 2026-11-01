@@ -24,54 +24,350 @@
 <script>
 const SUPABASE_URL='https://wffhkbrntksqrbcqsrou.supabase.co';
 const SUPABASE_KEY='sb_publishable_IHxjkA_4faoF_FUo2R1n8A_ITEXgK4e';
+
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let parts=[], stock=[], moves=[];
-function esc(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-async function addPart(){
- const {data:{session}}=await db.auth.getSession();
 
-if(!session){
-  alert('NU EXISTĂ SESIUNE');
-  return;
-}
-
-alert('SESIUNE OK - USER ID: '+session.user.id);
-  if(!session){
-    alert('NU EXISTĂ SESIUNE DE AUTENTIFICARE');
-    return;
-  }
-
-  alert('USER ID: '+session.user.id);
-
-  const name=prompt('Denumire piesă:');
- if(pr.error)throw pr.error;if(st.error)throw st.error;if(mv.error)throw mv.error;
- parts=pr.data||[];stock=st.data||[];moves=mv.data||[];
- document.getElementById('connection').textContent='Conectat la baza de date';
- renderDash();renderParts();renderStock();renderTransfer();renderMoves();
-}
-function qty(partId,loc){const r=stock.find(x=>x.part_id===partId&&x.location===loc);return r?.quantity||0}
-function show(id,btn){document.querySelectorAll('main section').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(id==='dashboard')renderDash();if(id==='piese')renderParts();if(id==='stoc')renderStock();if(id==='transfer')renderTransfer();if(id==='miscari')renderMoves()}
-function renderDash(){const dep=stock.filter(x=>x.location==='DEPOZIT').reduce((a,x)=>a+x.quantity,0),mag=stock.filter(x=>x.location==='MAGAZIN').reduce((a,x)=>a+x.quantity,0);let alerts=0,rows=[];parts.forEach(p=>[['DEPOZIT',qty(p.id,'DEPOZIT')],['MAGAZIN',qty(p.id,'MAGAZIN')]].forEach(x=>{if(x[1]<=p.min_stock){alerts++;rows.push(`<tr><td>${esc(p.name)}</td><td>${x[0]}</td><td><span class="badge low">${x[1]}</span></td></tr>`)}}));document.getElementById('total').textContent=parts.length;document.getElementById('dep').textContent=dep;document.getElementById('mag').textContent=mag;document.getElementById('alerts').textContent=alerts;document.getElementById('dep2').textContent=dep;document.getElementById('mag2').textContent=mag;document.getElementById('alertTable').innerHTML=rows.join('')||'<tr><td colspan="3">Nu există alerte.</td></tr>'}
-function renderParts(){const q=(document.getElementById('search')?.value||'').toLowerCase();document.getElementById('partsTable').innerHTML=parts.filter(p=>(p.code+p.oem+p.name+p.manufacturer).toLowerCase().includes(q)).map(p=>`<tr><td>${esc(p.code)}</td><td>${esc(p.oem)}</td><td>${esc(p.name)}</td><td>${esc(p.manufacturer)}</td><td>${p.min_stock}</td><td>${qty(p.id,'DEPOZIT')}</td><td>${qty(p.id,'MAGAZIN')}</td></tr>`).join('')}
-function renderStock(){const loc=document.getElementById('stockLoc').value,q=(document.getElementById('stockSearch').value||'').toLowerCase(),rows=[];parts.forEach(p=>[['DEPOZIT',qty(p.id,'DEPOZIT')],['MAGAZIN',qty(p.id,'MAGAZIN')]].forEach(x=>{if((loc==='TOATE'||loc===x[0])&&(`${p.code} ${p.name} ${p.oem}`).toLowerCase().includes(q))rows.push(`<tr><td>${esc(p.code)}</td><td>${esc(p.name)}</td><td>${x[0]}</td><td>${x[1]}</td><td><span class="badge ${x[1]<=p.min_stock?'low':'ok'}">${x[1]<=p.min_stock?'STOC MINIM':'OK'}</span></td></tr>`)}));document.getElementById('stockTable').innerHTML=rows.join('')}
-function renderTransfer(){document.getElementById('transferPart').innerHTML=parts.map(p=>`<option value="${p.id}">${esc(p.code)} — ${esc(p.name)}</option>`).join('')}
-async function transfer(){const partId=document.getElementById('transferPart').value,from=document.getElementById('from').value,to=document.getElementById('to').value,q=Number(document.getElementById('qty').value);if(from===to||q<1)return;const {error}=await db.rpc('transfer_stock',{p_part_id:partId,p_from:from,p_to:to,p_quantity:q,p_note:'Transfer între locații'});if(error){document.getElementById('transferMsg').innerHTML=`<span style="color:#b91c1c">Eroare: ${esc(error.message)}</span>`;return}document.getElementById('transferMsg').innerHTML='<span style="color:#166534">Transfer efectuat și salvat.</span>';await loadData()}
-function renderMoves(){const names=new Map(parts.map(p=>[p.id,p.name]));document.getElementById('movesTable').innerHTML=moves.map(m=>`<tr><td>${new Date(m.created_at).toLocaleString('ro-RO')}</td><td>${esc(m.movement_type)}</td><td>${esc(names.get(m.part_id)||m.part_id)}</td><td>${esc(m.location)}</td><td>${m.quantity}</td></tr>`).join('')||'<tr><td colspan="5">Nu există mișcări.</td></tr>'}
-async function addPart(){const name=prompt('Denumire piesă:');if(!name)return;const code=prompt('Cod intern:')||('ART-'+String(parts.length+1).padStart(3,'0'));const oem=prompt('Cod OEM:')||'';const manufacturer=prompt('Producător:')||'';const min_stock=Number(prompt('Stoc minim:','2'))||2;const {data,error}=await db.from('parts').insert({code,oem,name,manufacturer,min_stock}).select().single();if(error){alert('Eroare: '+error.message);return}await db.from('stock').insert([{part_id:data.id,location:'DEPOZIT',quantity:0},{part_id:data.id,location:'MAGAZIN',quantity:0}])
-await db.from('stock').insert([
-  {part_id:data.id,location:'DEPOZIT',quantity:0},
-  {part_id:data.id,location:'MAGAZIN',quantity:0}
-]);
-
-await loadData();
-}
-
-initAuth().catch(e=>console.error(e));
+let parts=[];
+let stock=[];
+let moves=[];
 let currentUser=null;
 let currentRole=null;
 
+function esc(v){
+  return String(v??'').replace(/[&<>'"]/g,c=>({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    "'":'&#39;',
+    '"':'&quot;'
+  }[c]));
+}
+
+function qty(partId,location){
+  const r=stock.find(x=>x.part_id===partId && x.location===location);
+  return r?.quantity || 0;
+}
+
+function show(id,btn){
+  document.querySelectorAll('main section').forEach(x=>x.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+
+  if(id==='dashboard') renderDash();
+  if(id==='piese') renderParts();
+  if(id==='stoc') renderStock();
+  if(id==='transfer') renderTransfer();
+  if(id==='miscari') renderMoves();
+}
+
+async function loadData(){
+
+  const [pr,st,mv]=await Promise.all([
+    db.from('parts').select('*').order('created_at',{ascending:false}),
+    db.from('stock').select('*'),
+    db.from('stock_movements').select('*').order('created_at',{ascending:false}).limit(200)
+  ]);
+
+  if(pr.error) throw pr.error;
+  if(st.error) throw st.error;
+  if(mv.error) throw mv.error;
+
+  parts=pr.data||[];
+  stock=st.data||[];
+  moves=mv.data||[];
+
+  document.getElementById('connection').textContent='Conectat la baza de date';
+
+  renderDash();
+  renderParts();
+  renderStock();
+  renderTransfer();
+  renderMoves();
+}
+
+function renderDash(){
+
+  const dep=stock
+    .filter(x=>x.location==='DEPOZIT')
+    .reduce((a,x)=>a+x.quantity,0);
+
+  const mag=stock
+    .filter(x=>x.location==='MAGAZIN')
+    .reduce((a,x)=>a+x.quantity,0);
+
+  let alerts=0;
+  let rows=[];
+
+  parts.forEach(p=>{
+
+    [
+      ['DEPOZIT',qty(p.id,'DEPOZIT')],
+      ['MAGAZIN',qty(p.id,'MAGAZIN')]
+    ].forEach(x=>{
+
+      if(x[1]<=p.min_stock){
+        alerts++;
+
+        rows.push(`
+          <tr>
+            <td>${esc(p.name)}</td>
+            <td>${x[0]}</td>
+            <td>
+              <span class="badge low">${x[1]}</span>
+            </td>
+          </tr>
+        `);
+      }
+
+    });
+
+  });
+
+  document.getElementById('total').textContent=parts.length;
+  document.getElementById('dep').textContent=dep;
+  document.getElementById('mag').textContent=mag;
+  document.getElementById('alerts').textContent=alerts;
+
+  document.getElementById('dep2').textContent=dep;
+  document.getElementById('mag2').textContent=mag;
+
+  document.getElementById('alertTable').innerHTML=
+    rows.join('') ||
+    '<tr><td colspan="3">Nu există alerte.</td></tr>';
+}
+
+function renderParts(){
+
+  const q=(document.getElementById('search')?.value||'').toLowerCase();
+
+  const rows=parts
+    .filter(p=>
+      (p.code+' '+p.oem+' '+p.name+' '+p.manufacturer)
+      .toLowerCase()
+      .includes(q)
+    )
+    .map(p=>`
+      <tr>
+        <td>${esc(p.code)}</td>
+        <td>${esc(p.oem)}</td>
+        <td>${esc(p.name)}</td>
+        <td>${esc(p.manufacturer)}</td>
+        <td>${p.min_stock}</td>
+        <td>${qty(p.id,'DEPOZIT')}</td>
+        <td>${qty(p.id,'MAGAZIN')}</td>
+      </tr>
+    `)
+    .join('');
+
+  document.getElementById('partsTable').innerHTML=
+    rows ||
+    '<tr><td colspan="7">Nu există articole.</td></tr>';
+}
+
+function renderStock(){
+
+  const loc=document.getElementById('stockLoc').value;
+  const q=(document.getElementById('stockSearch').value||'').toLowerCase();
+
+  const rows=[];
+
+  parts.forEach(p=>{
+
+    [
+      ['DEPOZIT',qty(p.id,'DEPOZIT')],
+      ['MAGAZIN',qty(p.id,'MAGAZIN')]
+    ].forEach(x=>{
+
+      if(
+        (loc==='TOATE'||loc===x[0]) &&
+        (`${p.code} ${p.name} ${p.oem}`)
+          .toLowerCase()
+          .includes(q)
+      ){
+
+        rows.push(`
+          <tr>
+            <td>${esc(p.code)}</td>
+            <td>${esc(p.name)}</td>
+            <td>${x[0]}</td>
+            <td>${x[1]}</td>
+            <td>
+              <span class="badge ${x[1]<=p.min_stock?'low':'ok'}">
+                ${x[1]<=p.min_stock?'STOC MINIM':'OK'}
+              </span>
+            </td>
+          </tr>
+        `);
+
+      }
+
+    });
+
+  });
+
+  document.getElementById('stockTable').innerHTML=
+    rows.join('') ||
+    '<tr><td colspan="5">Nu există stoc.</td></tr>';
+}
+
+function renderTransfer(){
+
+  document.getElementById('transferPart').innerHTML=
+    parts.map(p=>`
+      <option value="${p.id}">
+        ${esc(p.code)} — ${esc(p.name)}
+      </option>
+    `).join('');
+}
+
+async function transfer(){
+
+  if(!currentUser){
+    alert('Nu există sesiune de autentificare.');
+    return;
+  }
+
+  const partId=document.getElementById('transferPart').value;
+  const from=document.getElementById('from').value;
+  const to=document.getElementById('to').value;
+  const q=Number(document.getElementById('qty').value);
+
+  if(from===to){
+    alert('Locațiile trebuie să fie diferite.');
+    return;
+  }
+
+  if(q<1){
+    alert('Cantitatea trebuie să fie cel puțin 1.');
+    return;
+  }
+
+  const {error}=await db.rpc(
+    'transfer_stock',
+    {
+      p_part_id:partId,
+      p_from:from,
+      p_to:to,
+      p_quantity:q,
+      p_note:'Transfer între locații'
+    }
+  );
+
+  if(error){
+
+    document.getElementById('transferMsg').innerHTML=
+      `<span style="color:#b91c1c">
+        Eroare: ${esc(error.message)}
+      </span>`;
+
+    return;
+  }
+
+  document.getElementById('transferMsg').innerHTML=
+    '<span style="color:#166534">Transfer efectuat și salvat.</span>';
+
+  await loadData();
+}
+
+function renderMoves(){
+
+  const names=new Map(
+    parts.map(p=>[p.id,p.name])
+  );
+
+  document.getElementById('movesTable').innerHTML=
+    moves.map(m=>`
+      <tr>
+        <td>${new Date(m.created_at).toLocaleString('ro-RO')}</td>
+        <td>${esc(m.movement_type)}</td>
+        <td>${esc(names.get(m.part_id)||m.part_id)}</td>
+        <td>${esc(m.location)}</td>
+        <td>${m.quantity}</td>
+      </tr>
+    `).join('') ||
+    '<tr><td colspan="5">Nu există mișcări.</td></tr>';
+}
+
+async function addPart(){
+
+  if(currentRole!=='admin'){
+    alert('Doar administratorul poate adăuga articole.');
+    return;
+  }
+
+  const sessionResult=await db.auth.getSession();
+  const session=sessionResult.data.session;
+
+  if(!session){
+    alert('Nu există sesiune de autentificare.');
+    return;
+  }
+
+  const name=prompt('Denumire piesă:');
+
+  if(!name) return;
+
+  const code=
+    prompt('Cod intern:') ||
+    ('ART-'+String(parts.length+1).padStart(3,'0'));
+
+  const oem=prompt('Cod OEM:')||'';
+  const manufacturer=prompt('Producător:')||'';
+
+  const min_stock=
+    Number(prompt('Stoc minim:','2'))||2;
+
+  const {data,error}=await db
+    .from('parts')
+    .insert({
+      code,
+      oem,
+      name,
+      manufacturer,
+      min_stock
+    })
+    .select()
+    .single();
+
+  if(error){
+    alert('Eroare la adăugarea piesei: '+error.message);
+    return;
+  }
+
+  const {error:stockError}=await db
+    .from('stock')
+    .insert([
+      {
+        part_id:data.id,
+        location:'DEPOZIT',
+        quantity:0
+      },
+      {
+        part_id:data.id,
+        location:'MAGAZIN',
+        quantity:0
+      }
+    ]);
+
+  if(stockError){
+    alert(
+      'Piesa a fost creată, dar stocul inițial nu a putut fi creat: '+
+      stockError.message
+    );
+    return;
+  }
+
+  alert('Piesa a fost adăugată cu succes.');
+
+  await loadData();
+}
+
 async function initAuth(){
-  const {data:{session}}=await db.auth.getSession();
+
+  const {data:{session}}=
+    await db.auth.getSession();
 
   if(session){
     await setupUser(session.user);
@@ -81,30 +377,94 @@ async function initAuth(){
 }
 
 function showLogin(){
+
   if(document.getElementById('loginBox')) return;
 
   const box=document.createElement('div');
+
   box.id='loginBox';
+
   box.style.cssText=
     'position:fixed;inset:0;background:#f4f6f8;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
 
   box.innerHTML=`
-    <div style="width:100%;max-width:380px;background:white;padding:28px;border-radius:18px;box-shadow:0 8px 30px #0002;">
-      <h1 style="margin:0 0 8px;text-align:center;">SCRIDON SPEDITION</h1>
-      <p style="text-align:center;color:#666;margin-bottom:25px;">Autentificare</p>
 
-      <input id="loginEmail" type="email" placeholder="Email"
-        style="width:100%;box-sizing:border-box;padding:14px;margin-bottom:12px;border:1px solid #ddd;border-radius:10px;font-size:16px;">
+    <div style="
+      width:100%;
+      max-width:380px;
+      background:white;
+      padding:28px;
+      border-radius:18px;
+      box-shadow:0 8px 30px #0002;
+    ">
 
-      <input id="loginPassword" type="password" placeholder="Parola"
-        style="width:100%;box-sizing:border-box;padding:14px;margin-bottom:15px;border:1px solid #ddd;border-radius:10px;font-size:16px;">
+      <h1 style="margin:0 0 8px;text-align:center;">
+        SCRIDON SPEDITION
+      </h1>
 
-      <button onclick="doLogin()"
-        style="width:100%;padding:14px;background:#111;color:white;border:0;border-radius:10px;font-size:16px;font-weight:bold;">
+      <p style="
+        text-align:center;
+        color:#666;
+        margin-bottom:25px;
+      ">
+        Autentificare
+      </p>
+
+      <input
+        id="loginEmail"
+        type="email"
+        placeholder="Email"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:14px;
+          margin-bottom:12px;
+          border:1px solid #ddd;
+          border-radius:10px;
+          font-size:16px;
+        "
+      >
+
+      <input
+        id="loginPassword"
+        type="password"
+        placeholder="Parola"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:14px;
+          margin-bottom:15px;
+          border:1px solid #ddd;
+          border-radius:10px;
+          font-size:16px;
+        "
+      >
+
+      <button
+        onclick="doLogin()"
+        style="
+          width:100%;
+          padding:14px;
+          background:#111;
+          color:white;
+          border:0;
+          border-radius:10px;
+          font-size:16px;
+          font-weight:bold;
+        "
+      >
         Conectare
       </button>
 
-      <div id="loginError" style="color:#c00;text-align:center;margin-top:15px;"></div>
+      <div
+        id="loginError"
+        style="
+          color:#c00;
+          text-align:center;
+          margin-top:15px;
+        "
+      ></div>
+
     </div>
   `;
 
@@ -112,24 +472,33 @@ function showLogin(){
 }
 
 async function doLogin(){
-  const email=document.getElementById('loginEmail').value.trim();
-  const password=document.getElementById('loginPassword').value;
-  const errorBox=document.getElementById('loginError');
+
+  const email=
+    document.getElementById('loginEmail').value.trim();
+
+  const password=
+    document.getElementById('loginPassword').value;
+
+  const errorBox=
+    document.getElementById('loginError');
 
   errorBox.textContent='';
 
-  if(!email || !password){
-    errorBox.textContent='Completează emailul și parola.';
+  if(!email||!password){
+    errorBox.textContent=
+      'Completează emailul și parola.';
     return;
   }
 
-  const {data,error}=await db.auth.signInWithPassword({
-    email,
-    password
-  });
+  const {data,error}=
+    await db.auth.signInWithPassword({
+      email,
+      password
+    });
 
   if(error){
-    errorBox.textContent='Email sau parolă incorectă.';
+    errorBox.textContent=
+      'Email sau parolă incorectă.';
     return;
   }
 
@@ -137,66 +506,103 @@ async function doLogin(){
 }
 
 async function setupUser(user){
+
   currentUser=user;
 
-  const {data,error}=await db
-    .from('user_roles')
-    .select('role')
-    .eq('user_id',user.id)
-    .single();
+  const {data,error}=
+    await db
+      .from('user_roles')
+      .select('role')
+      .eq('user_id',user.id)
+      .single();
 
-  if(error || !data){
-    alert('Utilizatorul nu are un rol configurat.');
+  if(error||!data){
+
+    alert(
+      'Utilizatorul nu are un rol configurat.'
+    );
+
     await db.auth.signOut();
+
     showLogin();
+
     return;
   }
 
   currentRole=data.role;
 
-  const loginBox=document.getElementById('loginBox');
+  const loginBox=
+    document.getElementById('loginBox');
+
   if(loginBox) loginBox.remove();
 
   addUserInfo();
+
   applyRolePermissions();
 
   await loadData();
 }
 
 function addUserInfo(){
-  if(document.getElementById('userInfo')) return;
 
-  const info=document.createElement('div');
-  info.id='userInfo';
+  let info=
+    document.getElementById('userInfo');
+
+  if(!info){
+    info=document.createElement('div');
+    info.id='userInfo';
+    document.body.appendChild(info);
+  }
 
   info.style.cssText=
     'position:fixed;right:10px;top:10px;z-index:9999;background:white;padding:8px 12px;border-radius:10px;box-shadow:0 2px 10px #0002;font-size:12px;';
 
   info.innerHTML=`
-    <b>${currentRole==='admin'?'ADMIN':'GESTIONAR'}</b>
-    <button onclick="logout()" style="margin-left:8px;border:0;background:#eee;border-radius:6px;padding:5px 8px;">
+
+    <b>
+      ${currentRole==='admin'?'ADMIN':'GESTIONAR'}
+    </b>
+
+    <button
+      onclick="logout()"
+      style="
+        margin-left:8px;
+        border:0;
+        background:#eee;
+        border-radius:6px;
+        padding:5px 8px;
+      "
+    >
       Ieșire
     </button>
   `;
-
-  document.body.appendChild(info);
 }
 
 function applyRolePermissions(){
-  if(currentRole==='gestionar'){
-    const originalAddPart=window.addPart;
 
-    if(originalAddPart && !window._protectedAddPart){
-      window._protectedAddPart=true;
+  const addButton=
+    document.querySelector(
+      '#piese .toolbar button'
+    );
 
-      window.addPart=async function(){
-        alert('Doar administratorul poate adăuga/modifica articole.');
-      };
-    }
+  if(addButton){
+    addButton.style.display=
+      currentRole==='admin'?'':'none';
   }
 }
 
 async function logout(){
+
   await db.auth.signOut();
+
   location.reload();
-}</script></body></html>
+}
+
+initAuth().catch(error=>{
+
+  console.error(error);
+
+  document.getElementById('connection').textContent=
+    'Eroare conectare: '+error.message;
+});
+</script>
