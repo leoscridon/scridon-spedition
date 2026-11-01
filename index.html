@@ -247,6 +247,25 @@ function qty(partId,location){
   return r?.quantity || 0;
 }
 
+
+function toggleMenu() {
+  const aside = document.querySelector('.layout aside');
+  const button = document.getElementById('menuToggle');
+
+  const isOpen = aside.classList.toggle('menu-open');
+
+  button.setAttribute('aria-expanded', String(isOpen));
+  button.textContent = isOpen ? '✕' : '☰';
+}
+
+function closeMenu() {
+  const aside = document.querySelector('.layout aside');
+  const button = document.getElementById('menuToggle');
+
+  aside.classList.remove('menu-open');
+  button.setAttribute('aria-expanded', 'false');
+  button.textContent = '☰';
+}
 function show(id,btn){
   document.querySelectorAll('main section').forEach(x=>x.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
