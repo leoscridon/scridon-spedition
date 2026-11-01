@@ -407,7 +407,7 @@ async function deletePart(id) {
 
   const { error } = await db.rpc('set_part_active', {
     p_part_id: id,
-    p_active: false
+    p_is_active: false
   });
 
   if (error) {
