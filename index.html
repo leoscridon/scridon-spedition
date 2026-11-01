@@ -1117,7 +1117,8 @@ async function openBarcodeScanner(mode) {
     const partId = mode.slice(8);
     const part = activeParts().find(p => p.id === partId);
 
-    if (!part || currentRole !== 'admin') return;
+    
+if (!part || !['admin', 'gestionar'].includes(currentRole)) return;
 
     const input = prompt(
       'Pentru piesa ' + part.name +
