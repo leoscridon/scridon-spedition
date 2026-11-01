@@ -968,6 +968,81 @@ async function closeBarcodeScanner() {
     .classList.add('hidden');
 }
 
+async function addPartFromBarcode(barcode) {
+  if (currentRole !== 'admin') {
+    alert('Doar ADMIN poate adăuga piese.');
+    return;
+  }
+
+  const name = prompt('Denumire piesă:');
+  if (!name || !name.trim()) return;
+
+  const code = prompt('Cod intern:');
+  if (code === null) return;
+
+  const oem = prompt('Cod OEM:', '');
+  if (oem === null) return;
+
+  const manufacturer = prompt('Producător:', '');
+  if (manufacturer === null) return;
+
+  const minInput = prompt('Stoc minim:', '2');
+  if (minInput === null) return;
+
+  const minStock = Number(minInput);
+  if (!Number.isSafeInteger(minStock) || minStock < 0) {
+    alert('Stocul minim trebuie să fie un număr întreg pozitiv sau zero.');
+    return;
+  }
+
+  const partCode = code.trim() ||
+    ('ART-' + Date.now());
+
+  const { error } = await db.rpc('admin_add_part', {
+    p_code: partCode,
+    p_oem: oem.trim(),
+    p_name: name.trim(),
+    p_manufacturer: manufacturer.trim(),
+    p_min_stock: minStock
+  });
+
+  if (error) {
+    alert('Eroare la adăugare: ' + error.message);
+    return;
+  }
+
+  const { data: newParts, error: findError } = await db
+    .from('parts')
+    .select('id')
+    .eq('code', partCode)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (findError || !newParts?.length) {
+    alert('Piesa a fost adăugată, dar codul de bare nu a putut fi asociat automat.');
+    await loadData();
+    return;
+  }
+
+  const { error: barcodeError } = await db.rpc(
+    'admin_set_barcode',
+    {
+      p_part_id: newParts[0].id,
+      p_barcode: barcode
+    }
+  );
+
+  await loadData();
+
+  if (barcodeError) {
+    alert('Piesa a fost adăugată, dar asocierea codului de bare a eșuat: ' +
+          barcodeError.message);
+    return;
+  }
+
+  alert('Piesă adăugată și cod de bare asociat: ' + barcode);
+}
+
 async function openBarcodeScanner(mode) {
   const box = document.getElementById('scannerBox');
   box.classList.remove('hidden');
