@@ -12,6 +12,10 @@
 <header><div class="brand">SCRIDON SPEDITION<span>Gestiune stocuri — DEPOZIT & MAGAZIN</span></div><div id="connection" class="status">Se conectează...</div></header>
 <div class="layout"><aside><nav>
 <button class="active" onclick="show('dashboard',this)">📊 Dashboard</button><button onclick="show('piese',this)">🔧 Piese auto</button><button onclick="show('stoc',this)">📦 Stoc</button><button onclick="show('transfer',this)">⇄ Transfer între locații</button><button onclick="show('miscari',this)">↕ Mișcări stoc</button><button onclick="show('inventar',this)">✓ Inventar</button>
+
+<button onclick="show('ajustare',this)">
+  ➕ Intrare / Ieșire stoc
+</button>
 </nav></aside><main>
 <section id="dashboard"><h1>Dashboard</h1><div class="sub">Situația stocurilor în timp real</div><div class="cards"><div class="card"><div class="label">Total articole</div><div class="value" id="total">0</div></div><div class="card"><div class="label">Stoc DEPOZIT</div><div class="value" id="dep">0</div></div><div class="card"><div class="label">Stoc MAGAZIN</div><div class="value" id="mag">0</div></div><div class="card"><div class="label">Alerte stoc minim</div><div class="value" id="alerts">0</div></div></div><div class="grid"><div class="panel"><h2>Stoc pe locații</h2><table><thead><tr><th>Locație</th><th>Cantitate</th></tr></thead><tbody><tr><td class="location">DEPOZIT</td><td id="dep2">0</td></tr><tr><td class="location">MAGAZIN</td><td id="mag2">0</td></tr></tbody></table></div><div class="panel"><h2>Alerte</h2><table><thead><tr><th>Piesă</th><th>Locație</th><th>Stoc</th></tr></thead><tbody id="alertTable"></tbody></table></div></div></section>
 <section id="piese" class="hidden"><h1>Piese auto</h1><div class="sub">Catalogul articolelor gestionate</div><div class="panel"><div class="toolbar"><input id="search" placeholder="Caută cod, OEM sau denumire" oninput="renderParts()"><button class="primary" onclick="addPart()">+ Adaugă piesă</button></div><table><thead><tr><th>Cod</th><th>OEM</th><th>Denumire</th><th>Producător</th><th>Min.</th><th>DEPOZIT</th><th>MAGAZIN</th></tr></thead><tbody id="partsTable"></tbody></table></div></section>
