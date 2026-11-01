@@ -289,115 +289,65 @@ function renderMoves(){
     `).join('') ||
     '<tr><td colspan="5">Nu există mișcări.</td></tr>';
 }
-async function addPart(){
-  
-  if(currentRole!=='admin'){
+
+async function addPart() {
+  if (currentRole !== 'admin') {
     alert('Doar administratorul poate adăuga articole.');
     return;
   }
 
-  const name=prompt('Denumire piesă:');
-  if(!name) return;
+  const name = prompt('Denumire piesă:');
+  if (!name || !name.trim()) return;
 
-  const code=prompt('Cod intern:') ||
-    ('ART-'+String(parts.length+1).padStart(3,'0'));
+  const code = prompt('Cod intern:') ||
+    ('ART-' + String(parts.length + 1).padStart(3, '0'));
 
-  const oem=prompt('Cod OEM:')||'';
-  const manufacturer=prompt('Producător:')||'';
-  const min_stock=Number(prompt('Stoc minim:','2'))||2;
+  const oem = prompt('Cod OEM:') || '';
+  const manufacturer = prompt('Producător:') || '';
+  const min_stock = Number(prompt('Stoc minim:', '2')) || 2;
 
-  const {data,error}=await db.rpc('admin_add_part',{
-    p_code:code,
-    p_oem:oem,
-    p_name:name,
-    p_manufacturer:manufacturer,
-    p_min_stock:min_stock
-  });
+  try {
+    const { error } = await db.rpc('admin_add_part', {
+      p_code: code,
+      p_oem: oem,
+      p_name: name.trim(),
+      p_manufacturer: manufacturer,
+      p_min_stock: min_stock
+    });
 
-  if(error){
-    alert('Eroare la adăugarea piesei: '+error.message);
-    return;
+    if (error) {
+      alert('Eroare la adăugarea piesei: ' + error.message);
+      return;
+    }
+
+    alert('Piesa a fost adăugată cu succes.');
+    await loadData();
+
+  } catch (error) {
+    alert('Eroare: ' + error.message);
   }
-
-  alert('Piesa a fost adăugată cu succes.');
-  await loadData();
 }
 
-  const sessionResult=await db.auth.getSession();
-  const session=sessionResult.data.session;
+async function initAuth() {
+  try {
+    const { data, error } = await db.auth.getSession();
 
-  if(!session){
-    alert('Nu există sesiune de autentificare.');
-    return;
-  }
+    if (error) throw error;
 
-  const name=prompt('Denumire piesă:');
+    if (data.session) {
+      await setupUser(data.session.user);
+    } else {
+      document.getElementById('connection').textContent =
+        'Autentificare necesară';
+      showLogin();
+    }
 
-  if(!name) return;
+  } catch (error) {
+    console.error('Eroare autentificare:', error);
 
-  const code=
-    prompt('Cod intern:') ||
-    ('ART-'+String(parts.length+1).padStart(3,'0'));
+    document.getElementById('connection').textContent =
+      'Eroare conectare: ' + error.message;
 
-  const oem=prompt('Cod OEM:')||'';
-  const manufacturer=prompt('Producător:')||'';
-
-  const min_stock=
-    Number(prompt('Stoc minim:','2'))||2;
-
-  const {data,error}=await db
-    .from('parts')
-    .insert({
-      code,
-      oem,
-      name,
-      manufacturer,
-      min_stock
-    })
-    .select()
-    .single();
-
-  if(error){
-    alert('Eroare la adăugarea piesei: '+error.message);
-    return;
-  }
-
-  const {error:stockError}=await db
-    .from('stock')
-    .insert([
-      {
-        part_id:data.id,
-        location:'DEPOZIT',
-        quantity:0
-      },
-      {
-        part_id:data.id,
-        location:'MAGAZIN',
-        quantity:0
-      }
-    ]);
-
-  if(stockError){
-    alert(
-      'Piesa a fost creată, dar stocul inițial nu a putut fi creat: '+
-      stockError.message
-    );
-    return;
-  }
-
-  alert('Piesa a fost adăugată cu succes.');
-
-  await loadData();
-}
-
-async function initAuth(){
-
-  const {data:{session}}=
-    await db.auth.getSession();
-
-  if(session){
-    await setupUser(session.user);
-  }else{
     showLogin();
   }
 }
