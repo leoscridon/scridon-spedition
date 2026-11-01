@@ -412,10 +412,11 @@ async function addBarcodeToPart(partId) {
     return;
   }
 
-  if (currentRole !== 'admin') {
-    alert('Doar ADMIN poate adăuga coduri de bare.');
-    return;
-  }
+  
+if (!['admin', 'gestionar'].includes(currentRole)) {
+  alert('Nu ai permisiunea de a adăuga coduri de bare.');
+  return;
+}
 
   const part = parts.find(p => p.id === partId);
   if (!part) return;
