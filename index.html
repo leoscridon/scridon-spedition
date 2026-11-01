@@ -43,6 +43,14 @@ function renderTransfer(){document.getElementById('transferPart').innerHTML=part
 async function transfer(){const partId=document.getElementById('transferPart').value,from=document.getElementById('from').value,to=document.getElementById('to').value,q=Number(document.getElementById('qty').value);if(from===to||q<1)return;const {error}=await db.rpc('transfer_stock',{p_part_id:partId,p_from:from,p_to:to,p_quantity:q,p_note:'Transfer între locații'});if(error){document.getElementById('transferMsg').innerHTML=`<span style="color:#b91c1c">Eroare: ${esc(error.message)}</span>`;return}document.getElementById('transferMsg').innerHTML='<span style="color:#166534">Transfer efectuat și salvat.</span>';await loadData()}
 function renderMoves(){const names=new Map(parts.map(p=>[p.id,p.name]));document.getElementById('movesTable').innerHTML=moves.map(m=>`<tr><td>${new Date(m.created_at).toLocaleString('ro-RO')}</td><td>${esc(m.movement_type)}</td><td>${esc(names.get(m.part_id)||m.part_id)}</td><td>${esc(m.location)}</td><td>${m.quantity}</td></tr>`).join('')||'<tr><td colspan="5">Nu există mișcări.</td></tr>'}
 async function addPart(){const name=prompt('Denumire piesă:');if(!name)return;const code=prompt('Cod intern:')||('ART-'+String(parts.length+1).padStart(3,'0'));const oem=prompt('Cod OEM:')||'';const manufacturer=prompt('Producător:')||'';const min_stock=Number(prompt('Stoc minim:','2'))||2;const {data,error}=await db.from('parts').insert({code,oem,name,manufacturer,min_stock}).select().single();if(error){alert('Eroare: '+error.message);return}await db.from('stock').insert([{part_id:data.id,location:'DEPOZIT',quantity:0},{part_id:data.id,location:'MAGAZIN',quantity:0}])
+await db.from('stock').insert([
+  {part_id:data.id,location:'DEPOZIT',quantity:0},
+  {part_id:data.id,location:'MAGAZIN',quantity:0}
+]);
+
+await loadData();
+}
+
 initAuth().catch(e=>console.error(e));
 let currentUser=null;
 let currentRole=null;
