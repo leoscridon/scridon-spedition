@@ -311,7 +311,8 @@ async function transfer(){
   await loadData();
 }
 
-function renderMoves(){
+function renderMoves()
+renderAdjust();{
 
   const names=new Map(
     parts.map(p=>[p.id,p.name])
