@@ -1087,9 +1087,22 @@ if (!part) {
 }
 
 
-        document.getElementById('search').value = part.code;
-        renderParts();
-        alert('Piesă găsită: ' + part.name);
+        
+if (mode === 'adjust') {
+  document.getElementById('adjustPart').value = part.id;
+
+  alert(
+    'Piesă: ' + part.name +
+    '\nDEPOZIT: ' + qty(part.id, 'DEPOZIT') + ' buc.' +
+    '\nMAGAZIN: ' + qty(part.id, 'MAGAZIN') + ' buc.' +
+    '\nAlege locația, Ieșire stoc și cantitatea.'
+  );
+} else {
+  document.getElementById('search').value = part.code;
+  renderParts();
+  alert('Piesă găsită: ' + part.name);
+}
+
       },
       function() {}
     );
