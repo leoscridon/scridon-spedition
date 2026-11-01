@@ -365,6 +365,40 @@ function renderDash(){
     '<tr><td colspan="3">Nu există alerte.</td></tr>';
 }
 
+
+async function deletePart(id) {
+  if (currentRole !== 'admin') {
+    alert('Doar ADMIN poate șterge produse.');
+    return;
+  }
+
+  const part = parts.find(p => p.id === id);
+  if (!part) return;
+
+  const confirmed = confirm(
+    'ȘTERGERE DEFINITIVĂ!\n\n' +
+    'Produs: ' + part.name + '\n' +
+    'Cod: ' + part.code + '\n\n' +
+    'Produsul va fi șters definitiv doar dacă ' +
+    'are stoc zero și nu are istoric.\n\n' +
+    'Continui?'
+  );
+
+  if (!confirmed) return;
+
+  const { error } = await db.rpc(
+    'admin_delete_part',
+    { p_part_id: id }
+  );
+
+  if (error) {
+    alert('Produsul nu a fost șters:\n' + error.message);
+    return;
+  }
+
+  alert('Produs șters definitiv.');
+  await loadData();
+}
 function renderParts(){
 
   const q=(document.getElementById('search')?.value||'').toLowerCase();
