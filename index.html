@@ -1099,6 +1099,38 @@ async function addPartFromBarcode(barcode) {
 }
 
 async function openBarcodeScanner(mode) {
+
+  if (mode && mode.startsWith('barcode:')) {
+    const partId = mode.slice(8);
+    const part = activeParts().find(p => p.id === partId);
+
+    if (!part || currentRole !== 'admin') return;
+
+    const input = prompt(
+      'Pentru piesa ' + part.name +
+      '\nApasă Anulează pentru scanare cu camera.' +
+      '\nSau introdu manual codul de bare:',
+      ''
+    );
+
+    if (input !== null) {
+      const barcode = input.trim();
+      if (!barcode) return;
+
+      const { error } = await db.rpc('admin_add_part_barcode', {
+        p_part_id: partId,
+        p_barcode: barcode
+      });
+
+      if (error) alert('Eroare: ' + error.message);
+      else {
+        await loadData();
+        alert('Cod asociat piesei: ' + part.name);
+      }
+      return;
+    }
+  }
+
   const box = document.getElementById('scannerBox');
   box.classList.remove('hidden');
 
