@@ -1201,10 +1201,10 @@ const part = activeParts().find(p =>
 );
 
         
+
 if (!part) {
-  if (currentRole !== 'admin') {
-    alert('Cod necunoscut: ' + code +
-          '. Doar ADMIN poate adăuga piese.');
+  if (!['admin', 'gestionar'].includes(currentRole)) {
+    alert('Nu ai permisiunea de a adăuga piese.');
     return;
   }
 
