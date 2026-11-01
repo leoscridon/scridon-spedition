@@ -1093,13 +1093,15 @@ if (!['admin', 'gestionar'].includes(currentRole)) {
     return;
   }
 
-  const { error: barcodeError } = await db.rpc(
-    'admin_set_barcode',
-    {
-      p_part_id: newParts[0].id,
-      p_barcode: barcode
-    }
-  );
+  
+const { error: barcodeError } = await db.rpc(
+  'admin_add_part_barcode',
+  {
+    p_part_id: newParts[0].id,
+    p_barcode: barcode
+  }
+);
+
 
   await loadData();
 
