@@ -499,14 +499,17 @@ function renderParts(){
         <td>${qty(p.id,'DEPOZIT')}</td>
         <td>${qty(p.id,'MAGAZIN')}</td>
 
+
 <td>
-  ${currentRole === 'admin' ? `
+  ${['admin', 'gestionar'].includes(currentRole) ? `
     <button
       type="button"
       onclick="addBarcodeToPart('${p.id}')">
       ➕ Cod de bare
     </button>
+  ` : ''}
 
+  ${currentRole === 'admin' ? `
     <button
       type="button"
       onclick="deletePart('${p.id}')"
@@ -515,7 +518,7 @@ function renderParts(){
              padding:10px 12px;cursor:pointer">
       Arhivează
     </button>
-  ` : ''}  
+  ` : ''}
 </td>
       </tr>
     `)
