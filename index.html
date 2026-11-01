@@ -327,10 +327,12 @@ async function loadData(){
   if(pr.error) throw pr.error;
   if(st.error) throw st.error;
   if(mv.error) throw mv.error;
+  if(bc.error) throw bc.error;
 
   parts=pr.data||[];
   stock=st.data||[];
   moves=mv.data||[];
+  partBarcodes=bc.data||[];
 
   document.getElementById('connection').textContent='Conectat la baza de date';
 
