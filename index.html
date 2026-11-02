@@ -1057,7 +1057,8 @@ if (!['admin', 'gestionar'].includes(currentRole)) {
   const manufacturer = prompt('Producător:', '');
   if (manufacturer === null) return;
 
-  const minInput = prompt('Stoc minim:', '2');
+  
+const minInput = prompt('Stoc minim:', '1');
   if (minInput === null) return;
 
   const minStock = Number(minInput);
