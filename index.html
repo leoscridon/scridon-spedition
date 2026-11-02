@@ -933,7 +933,8 @@ function applyRolePermissions(){
 
   if(addButton){
     addButton.style.display=
-      currentRole==='admin'?'':'none';
+      
+['admin', 'gestionar'].includes(currentRole)?'':'none';
   }
 }
 
