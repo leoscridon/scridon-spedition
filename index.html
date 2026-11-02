@@ -258,6 +258,11 @@ document.getElementById('connection').textContent =
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.js"></script>
+
+<script>
+document.getElementById('connection').textContent =
+  'SUPABASE: ' + typeof window.supabase;
+</script>
 <script>
 const SUPABASE_URL='https://wffhkbrntksqrbcqsrou.supabase.co';
 const SUPABASE_KEY='sb_publishable_IHxjkA_4faoF_FUo2R1n8A_ITEXgK4e';
