@@ -257,7 +257,8 @@ document.getElementById('connection').textContent =
 </script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.js" onload="document.getElementById('connection').textContent='BIBLIOTECA ÎNCĂRCATĂ'" onerror="document.getElementById('connection').textContent='EROARE BIBLIOTECĂ'"></script>
 
 <script>
 document.getElementById('connection').textContent =
