@@ -1,5 +1,5 @@
 // SCRIDON SPEDITION: network-first for the app shell; Supabase is never cached.
-const CACHE = 'scridon-shell-v1';
+const CACHE = 'scridon-shell-v2';
 const SHELL = '/scridon-spedition/';
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.add(SHELL)).catch(() => {}));
