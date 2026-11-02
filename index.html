@@ -277,6 +277,7 @@ window.onerror = function(message) {
   document.getElementById('connection').textContent =
     'EROARE JS: ' + message;
 };
+alert('ÎNAINTE DE CREATECLIENT');
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 alert('CLIENT SUPABASE CREAT');
 document.getElementById('connection').textContent =
