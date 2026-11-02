@@ -256,6 +256,8 @@ if ('serviceWorker' in navigator) {
 const SUPABASE_URL='https://wffhkbrntksqrbcqsrou.supabase.co';
 const SUPABASE_KEY='sb_publishable_IHxjkA_4faoF_FUo2R1n8A_ITEXgK4e';
 
+document.getElementById('connection').textContent =
+  'TEST PORNIRE 22';
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 document.getElementById('connection').textContent =
   'Supabase încărcat. Se verifică autentificarea...';
