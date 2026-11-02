@@ -674,7 +674,8 @@ if (!['admin', 'gestionar'].includes(currentRole)) {
 
   const oem = prompt('Cod OEM:') || '';
   const manufacturer = prompt('Producător:') || '';
-  const min_stock = Number(prompt('Stoc minim:', '2')) || 2;
+  const 
+const min_stock = Number(prompt('Stoc minim:', '1')) || 1;
 
   try {
     const { error } = await db.rpc('admin_add_part', {
