@@ -278,6 +278,7 @@ window.onerror = function(message) {
     'EROARE JS: ' + message;
 };
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+alert('CLIENT SUPABASE CREAT');
 document.getElementById('connection').textContent =
   'Supabase încărcat. Se verifică autentificarea...';
 
