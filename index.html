@@ -744,6 +744,128 @@ async function editPartName(id) {
   await loadData();
   alert('Piesa a fost actualizată!');
 }
+function openEditPartForm(id) {
+  const p = parts.find(x => x.id === id);
+  if (!p) return;
+
+  if (!['admin', 'gestionar'].includes(currentRole)) {
+    alert('Nu ai permisiunea de editare.');
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'editPartOverlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:#0009;
+    display:flex;align-items:center;justify-content:center;
+    z-index:9999;padding:16px;
+  `;
+
+  const form = document.createElement('form');
+  form.style.cssText = `
+    background:white;padding:22px;border-radius:16px;
+    width:100%;max-width:440px;max-height:90vh;
+    overflow-y:auto;box-sizing:border-box;
+  `;
+
+  const fields = [
+    ['code', 'Cod intern'],
+    ['oem', 'Cod OEM'],
+    ['name', 'Denumire'],
+    ['manufacturer', 'Producător'],
+    ['min_stock', 'Stoc minim']
+  ];
+
+  const title = document.createElement('h2');
+  title.textContent = '✏️ Editează piesa';
+  form.appendChild(title);
+
+  fields.forEach(([key, label]) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.marginBottom = '12px';
+
+    const text = document.createElement('label');
+    text.textContent = label;
+    text.style.display = 'block';
+
+    const input = document.createElement('input');
+    input.name = key;
+    input.value = p[key] ?? '';
+    input.type = key === 'min_stock' ? 'number' : 'text';
+    input.style.cssText = `
+      width:100%;padding:12px;margin-top:5px;
+      box-sizing:border-box;border:1px solid #ccc;
+      border-radius:8px;
+    `;
+
+    if (key === 'min_stock') {
+      input.min = '0';
+      input.step = '1';
+    }
+
+    wrapper.append(text, input);
+    form.appendChild(wrapper);
+  });
+
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.textContent = 'Anulează';
+  cancel.onclick = () => overlay.remove();
+
+  const save = document.createElement('button');
+  save.type = 'submit';
+  save.textContent = '💾 Salvează';
+
+  form.append(cancel, save);
+
+  form.onsubmit = async event => {
+    event.preventDefault();
+
+    const values = Object.fromEntries(
+      new FormData(form).entries()
+    );
+
+    values.code = values.code.trim();
+    values.name = values.name.trim();
+    values.oem = values.oem.trim();
+    values.manufacturer = values.manufacturer.trim();
+
+    const min = Number(values.min_stock);
+
+    if (!values.code || !values.name ||
+        !Number.isInteger(min) || min < 0) {
+      alert('Verifică datele introduse.');
+      return;
+    }
+
+    values.min_stock = min;
+    save.disabled = true;
+
+    try {
+      const { data, error } = await db
+        .from('parts')
+        .update(values)
+        .eq('id', id)
+        .select('id');
+
+      if (error) throw error;
+      if (!data || !data.length) {
+        throw new Error('Modificarea nu a fost salvată.');
+      }
+
+      await loadData();
+      overlay.remove();
+      alert('Piesa a fost actualizată!');
+    } catch (err) {
+      alert('Eroare: ' + err.message);
+    } finally {
+      save.disabled = false;
+    }
+  };
+
+  overlay.appendChild(form);
+  document.body.appendChild(overlay);
+}
 async function addPart() {
   
 if (!['admin', 'gestionar'].includes(currentRole)) {
