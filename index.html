@@ -521,11 +521,11 @@ function renderParts(){
         <td>${qty(p.id,'MAGAZIN')}</td>
 
 <td>
-  ${currentRole === 'admin' ? `
-    <button type="button" onclick="editPartName('${p.id}')">
-      ✏️ Editează denumirea
-    </button>
-  ` : ''}
+  ${['admin', 'gestionar'].includes(currentRole) ? `
+  <button type="button" onclick="editPartName('${p.id}')">
+    ✏️ Editează piesa
+  </button>
+` : ''}
   ${['admin', 'gestionar'].includes(currentRole) ? `
     <button
       type="button"
