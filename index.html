@@ -685,34 +685,64 @@ function renderMoves(){
 }
 async function editPartName(id) {
   if (currentRole !== 'admin') {
-    alert('Doar ADMIN poate modifica denumirea.');
+    alert('Doar ADMIN poate edita piesele.');
     return;
   }
 
   const part = parts.find(p => p.id === id);
   if (!part) return;
 
-  const name = prompt('Denumire nouă:', part.name);
+  const code = prompt('Cod intern:', part.code);
+  if (code === null) return;
+
+  const oem = prompt('Cod OEM:', part.oem || '');
+  if (oem === null) return;
+
+  const name = prompt('Denumire:', part.name);
   if (name === null) return;
 
-  const newName = name.trim();
-  if (!newName) {
-    alert('Denumirea nu poate fi goală.');
+  const manufacturer = prompt(
+    'Producător:', part.manufacturer || ''
+  );
+  if (manufacturer === null) return;
+
+  const minInput = prompt(
+    'Stoc minim:', String(part.min_stock ?? 1)
+  );
+  if (minInput === null) return;
+
+  const minStock = Number(minInput);
+
+  if (!code.trim() || !name.trim() ||
+      !Number.isInteger(minStock) || minStock < 0) {
+    alert('Verifică denumirea, codul și stocul minim.');
     return;
   }
 
-  const { error } = await db
+  const { data, error } = await db
     .from('parts')
-    .update({ name: newName })
-    .eq('id', id);
+    .update({
+      code: code.trim(),
+      oem: oem.trim(),
+      name: name.trim(),
+      manufacturer: manufacturer.trim(),
+      min_stock: minStock
+    })
+    .eq('id', id)
+    .select('id');
 
   if (error) {
     alert('Eroare: ' + error.message);
     return;
   }
 
+  if (!data || data.length === 0) {
+    alert('Modificarea nu a fost salvată. Verificăm permisiunile.');
+    return;
+  }
+
   await loadData();
-  alert('Denumirea a fost modificată!');
+  alert('Piesa a fost actualizată!');
 }
 async function addPart() {
   
