@@ -684,10 +684,10 @@ function renderMoves(){
     '<tr><td colspan="5">Nu există mișcări.</td></tr>';
 }
 async function editPartName(id) {
-  if (currentRole !== 'admin') {
-    alert('Doar ADMIN poate edita piesele.');
-    return;
-  }
+  if (!['admin', 'gestionar'].includes(currentRole)) {
+  alert('Nu ai permisiunea de a edita piesele.');
+  return;
+}
 
   const part = parts.find(p => p.id === id);
   if (!part) return;
