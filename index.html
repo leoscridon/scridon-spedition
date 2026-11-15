@@ -689,7 +689,33 @@ function renderParts() {
   document.getElementById('partsTable').innerHTML=
     rows ||
     '<tr><td colspan="10">Nu există articole.</td></tr>';
-}
+activeParts().forEach(async p => {
+  const img = document.getElementById('photo-' + p.id);
+  if (!img) return;
+
+  const { data, error } = await db.storage
+    .from('poze-piese')
+    .list(p.id, { limit: 100 });
+
+  if (error || !data) return;
+
+  const file = data.find(f =>
+    /\.(jpg|jpeg|png|webp|gif|heic|heif)$/i.test(f.name)
+  );
+
+  if (!file) return;
+
+  const { data: signed, error: urlError } = await db.storage
+    .from('poze-piese')
+    .createSignedUrl(p.id + '/' + file.name, 3600);
+
+  if (urlError || !signed?.signedUrl) return;
+
+  if (!img.isConnected) return;
+
+  img.src = signed.signedUrl;
+  img.style.display = 'block';
+});}
 
 function renderStock(){
 
