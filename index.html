@@ -517,6 +517,11 @@ async function deletePart(id) {
   .filter(b => b.part_id === p.id)
   .map(b => b.barcode)
   .join(', ') || p.barcode || '—')}</td>
+  <td>
+  <button type="button" onclick="openPartPhotos('${p.id}')">
+    📷 Fotografii
+  </button>
+</td>
         <td>${esc(p.oem)}</td>
         <td>${esc(p.name)}</td>
         <td>${esc(p.manufacturer)}</td>
