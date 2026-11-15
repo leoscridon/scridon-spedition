@@ -577,7 +577,10 @@ function renderStock(){
 
         rows.push(`
           <tr>
-            <td>${esc(p.code)}</td>
+            <td>${esc(partBarcodes
+  .filter(b => b.part_id === p.id)
+  .map(b => b.barcode)
+  .join(', ') || p.barcode || '—')}</td>
             <td>${esc(p.name)}</td>
             <td>${x[0]}</td>
             <td>${x[1]}</td>
