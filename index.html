@@ -368,7 +368,131 @@ async function loadData(){
 function activeParts(){
   return parts.filter(p => p.is_active !== false);
 }
+async function openPartPhotos(partId) {
+  const part = parts.find(p => p.id === partId);
+  if (!part) return;
 
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:#000a;
+    z-index:9999;display:flex;align-items:center;
+    justify-content:center;padding:15px;
+  `;
+
+  const panel = document.createElement('div');
+  panel.style.cssText = `
+    background:white;padding:20px;border-radius:14px;
+    width:100%;max-width:450px;max-height:85vh;
+    overflow-y:auto;box-sizing:border-box;
+  `;
+
+  const title = document.createElement('h3');
+  title.textContent = '📷 Fotografii: ' + part.name;
+
+  const close = document.createElement('button');
+  close.textContent = '✖ Închide';
+  close.type = 'button';
+  close.onclick = () => overlay.remove();
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.style.cssText = 'display:block;margin:18px 0;width:100%';
+
+  const status = document.createElement('p');
+  const gallery = document.createElement('div');
+
+  panel.append(title, close, input, status, gallery);
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+
+  async function loadPhotos() {
+    status.textContent = 'Se încarcă fotografiile...';
+    gallery.replaceChildren();
+
+    const { data, error } = await db.storage
+      .from('poze-piese')
+      .list(partId, { limit: 100 });
+
+    if (error) {
+      status.textContent = 'Eroare: ' + error.message;
+      return;
+    }
+
+    const files = (data || []).filter(f =>
+      /\.(jpg|jpeg|png|webp|gif|heic|heif)$/i.test(f.name)
+    );
+
+    status.textContent = files.length
+      ? files.length + ' fotografii'
+      : 'Nu există fotografii.';
+
+    for (const file of files) {
+      const path = partId + '/' + file.name;
+
+      const { data: signed, error: urlError } =
+        await db.storage
+          .from('poze-piese')
+          .createSignedUrl(path, 3600);
+
+      if (urlError || !signed?.signedUrl) continue;
+
+      const img = document.createElement('img');
+      img.src = signed.signedUrl;
+      img.alt = 'Fotografie piesă';
+      img.style.cssText = `
+        width:100%;max-height:300px;object-fit:contain;
+        margin:8px 0;border-radius:8px;
+      `;
+
+      gallery.appendChild(img);
+    }
+  }
+
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Selectează o fotografie.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Fotografia trebuie să fie sub 10 MB.');
+      return;
+    }
+
+    input.disabled = true;
+    status.textContent = 'Se salvează fotografia...';
+
+    const extension =
+      file.name.split('.').pop().toLowerCase();
+
+    const path =
+      partId + '/' + crypto.randomUUID() + '.' + extension;
+
+    const { error } = await db.storage
+      .from('poze-piese')
+      .upload(path, file, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    input.disabled = false;
+    input.value = '';
+
+    if (error) {
+      alert('Eroare: ' + error.message);
+      return;
+    }
+
+    await loadPhotos();
+    alert('Fotografia a fost salvată!');
+  };
+
+  await loadPhotos();
+}
 function renderDash(){
 
   const dep=stock
@@ -560,7 +684,7 @@ async function deletePart(id) {
 
   document.getElementById('partsTable').innerHTML=
     rows ||
-    '<tr><td colspan="9">Nu există articole.</td></tr>';
+    '<tr><td colspan="10">Nu există articole.</td></tr>';
 }
 
 function renderStock(){
