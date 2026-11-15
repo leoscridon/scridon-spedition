@@ -446,6 +446,31 @@ async function openPartPhotos(partId) {
       `;
 
       gallery.appendChild(img);
+      const deleteBtn = document.createElement('button');
+deleteBtn.type = 'button';
+deleteBtn.textContent = '🗑️ Șterge fotografia';
+deleteBtn.style.cssText = 'display:block;margin-bottom:20px;background:#dc2626;color:white;padding:10px;border:0;border-radius:8px;';
+
+deleteBtn.onclick = async () => {
+  if (!confirm('Sigur vrei să ștergi această fotografie?')) return;
+
+  deleteBtn.disabled = true;
+
+  const { error } = await db.storage
+    .from('poze-piese')
+    .remove([path]);
+
+  if (error) {
+    alert('Eroare: ' + error.message);
+    deleteBtn.disabled = false;
+    return;
+  }
+
+  await loadPhotos();
+  renderParts();
+};
+
+gallery.appendChild(deleteBtn);
     }
   }
 
